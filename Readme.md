@@ -11,8 +11,8 @@ This repository contains a Dockerized setup for running the News Aggregator Lara
 
 1. Clone this repository:
 ```bash
-git clone https://github.com/yourusername/yourproject.git
-cd yourproject
+git clone https://github.com/victor/news-aggregator.git
+cd news-aggregator
 ```
 
 2. Create a `.env` file in the project root with the required variables:
