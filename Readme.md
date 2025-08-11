@@ -11,7 +11,7 @@ This repository contains a Dockerized setup for running the News Aggregator Lara
 
 1. Clone this repository:
 ```bash
-git clone https://github.com/victor/news-aggregator.git
+git clone https://github.com/victayo/news-aggregator.git
 cd news-aggregator
 ```
 
@@ -206,7 +206,7 @@ This a NextJS based News Aggregator project that displayes news from several sou
 
 1. Clone this repository:
 ```bash
-git clone https://github.com/victor/news-aggregator.git
+git clone https://github.com/victayo/news-aggregator.git
 cd news-aggregator/frontend
 ```
 
