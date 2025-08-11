@@ -11,6 +11,10 @@ class NYTimesService implements NewsSource{
 
     protected $apiKey;
     protected $baseUrl;
+
+    /**
+     * Initialize the service with API configuration.
+     */
     public function __construct() {
         $this->apiKey = config("news.nytimes.api_key");
         $this->baseUrl = config("news.nytimes.base_url");
@@ -20,6 +24,14 @@ class NYTimesService implements NewsSource{
         $this->fetchAllTopStories();
     }
 
+    /**
+     * Fetch and store top stories for all configured categories.
+     *
+     * Loops through categories defined in config('news.nytimes.categories')
+     * and saves each article into the database.
+     *
+     * @return void
+     */
     public function fetchAllTopStories() {
         $categories = config('news.nytimes.categories', []);
         foreach ($categories as $category) {
@@ -35,6 +47,12 @@ class NYTimesService implements NewsSource{
         }
     }
 
+    /**
+     * Fetch top stories from a specific NYT section.
+     *
+     * @param string $section The section/category (e.g., 'home', 'world', 'technology').
+     * @return array List of parsed articles.
+     */
     public function fetchTopStories($section = 'home') {
         $path = "topstories/v2/{$section}.json";
         $response = $this->makeRequest($path);
@@ -56,6 +74,12 @@ class NYTimesService implements NewsSource{
         throw new NewsAggregatorException("Failed to fetch data for {$path}: " . $response->body());
     }
 
+    /**
+     * Parse raw NYT API response into Article format.
+     *
+     * @param array $response articles from NYT API.
+     * @return array          List of parsed article arrays.
+     */
     protected function parseResponse($response) {
         $articles = [];
         foreach ($response as $item) {

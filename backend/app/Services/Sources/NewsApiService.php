@@ -13,20 +13,34 @@ class NewsApiService implements NewsSource
     protected $apiKey;
     protected $baseUrl;
 
+    /**
+     * Initialize NewsApiService with config values.
+     */
     public function __construct()
     {
         $this->apiKey = config('news.news_api.api_key');
         $this->baseUrl = config('news.news_api.base_url');
     }
 
+    /**
+     * Load news articles from the News API.
+     *
+     * It fetches top headlines for all categories.
+     *
+     * @return void
+     */
     public function loadNews(){
         $this->fetchTopHeadlines();
     }
 
     /**
-     * Get available categories from the News API.
+     * Retrieve available news categories from the News API.
      *
-     * @return array
+     * This calls the `top-headlines/sources` endpoint and extracts
+     * the unique categories of available sources.
+     *
+     * @return array List of category names.
+     * @throws NewsAggregatorException if API request fails.
      */
     public function getCategories(){
         $path = self::TOP_HEADLINES_ENDPOINT . '/sources';
@@ -42,6 +56,13 @@ class NewsApiService implements NewsSource
         return $categories;
     }
 
+    /**
+     * Fetch top headlines from the News API for all categories.
+     *
+     * @param array $params Additional query parameters for the API request.
+     * @return array List of parsed articles grouped by category.
+     * @throws NewsAggregatorException if API request fails.
+     */
     public function fetchTopHeadlines($params = [])
     {
         $categories = $this->getCategories();
@@ -74,6 +95,15 @@ class NewsApiService implements NewsSource
         throw new NewsAggregatorException("Failed to fetch data for {$path}: " . $response->body());
     }
 
+     /**
+     * Parse the API response and store articles in the database.
+     *
+     * Skips articles without a title or URL.
+     *
+     * @param array $response Array of article objects from the API.
+     * @param string $category The category these articles belong to.
+     * @return array Parsed and saved article data.
+     */
     private function parseResponse($response, $category)
     {
         $articles = [];
