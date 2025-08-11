@@ -1,61 +1,139 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Laravel News Aggregator
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Overview
+This Laravel-based News Aggregator project fetches news articles from multiple external sources (e.g., NewsAPI, NYTimes) and stores them locally for querying and filtering.  
+The system is designed for flexibility, allowing you to easily add new news sources via configuration and service classes.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Features
+- Fetch news from multiple preconfigured sources.
+- Store fetched news articles in the local database.
+- Query articles by category, source name, author, published date, or full-text search.
+- Supports pagination and filtering.
+- Simple interface for adding new sources.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Project Structure
 
-## Learning Laravel
+### **Services**
+#### 1. `ArticleService`
+- **getCategories()**: Retrieves a list of distinct categories from stored articles.
+- **setUserCategory(User $user, $categories)**: Saves user preferences for categories.
+- **getUserCategories(User $user)**: Retrieves stored user category preferences.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+#### 2. `ArticleSearchService`
+- Chainable search filters for articles:
+  - `category($category)`
+  - `sourceName($source)`
+  - `author($author)`
+  - `publishedDate($publishedDate)`
+  - `publishedDateRange($startDate, $endDate)`
+  - `allSearch($search)`
+- **search($perPage)**: Paginates results, ordered by publish date.
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+#### 3. `NewsApiService`
+- Fetches articles from **NewsAPI**.
+- Implements `NewsSource` interface.
+- Methods:
+  - **getCategories()**: Fetches categories from NewsAPI.
+  - **fetchTopHeadlines()**: Retrieves articles for each category.
+  - **parseResponse()**: Maps external API response into local database format.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+#### 4. `NYTimesService`
+- Fetches articles from **NYTimes API**.
+- Implements `NewsSource` interface.
+- Methods:
+  - **fetchAllTopStories()**: Loops through categories and saves articles.
+  - **fetchTopStories()**: Retrieves articles for a specific category.
+  - **parseResponse()**: Maps NYTimes API response into local format.
 
-## Laravel Sponsors
+#### 5. `NewsScrapeService`
+- Loops through configured sources and calls their `loadNews()` method.
+- Each source runs independently and logs results.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+---
 
-### Premium Partners
+## Configuration
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### **News Sources**
+All news sources are registered in `config/news.php`.
 
-## Contributing
+Example:
+```php
+return [
+    'sources' => [
+        \App\Services\Sources\NewsApiService::class,
+        \App\Services\Sources\NYTimesService::class,
+    ],
+    'news_api' => [
+        'api_key' => env('NEWS_API_KEY'),
+        'base_url' => 'https://newsapi.org',
+    ],
+    'nytimes' => [
+        'api_key' => env('NYTIMES_API_KEY'),
+        'base_url' => 'https://api.nytimes.com',
+        'categories' => ['home', 'world', 'science', 'technology'],
+    ],
+];
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### **Environment Variables**
+Add these to your `.env` file:
+```
+NEWS_API_KEY=your_newsapi_key
+NYTIMES_API_KEY=your_nytimes_key
+```
 
-## Code of Conduct
+---
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Adding a New News Source
 
-## Security Vulnerabilities
+1. **Create a Service Class**
+   - Create a new class in `App\Services\Sources`.
+   - Implement the `NewsSource` interface:
+     ```php
+     namespace App\Services\Sources;
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+     use App\Services\Sources\Contracts\NewsSource;
 
-## License
+     class MyCustomNewsService implements NewsSource {
+         public function loadNews() {
+             // Fetch and store articles here
+         }
+     }
+     ```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+2. **Register the Source**
+   - Add the class to `config/news.php`:
+     ```php
+     'sources' => [
+         \App\Services\Sources\NewsApiService::class,
+         \App\Services\Sources\NYTimesService::class,
+         \App\Services\Sources\MyCustomNewsService::class,
+     ],
+     ```
+
+3. **Configure API Keys and Endpoints**
+   - Add necessary keys and URLs to `config/news.php` and `.env`.
+
+4. **Test the Source**
+   - Run the scraper command:
+     ```bash
+     php artisan news:scrape
+     ```
+
+---
+
+## Artisan Command
+The project includes a console command to trigger news scraping:
+
+```bash
+php artisan news:scrape
+```
+- **Start**: Prints "Starting news scrapper".
+- **Execution**: Loops through configured sources, fetching and storing articles.
+- **End**: Prints "Ending News scrapper".
+
+---
